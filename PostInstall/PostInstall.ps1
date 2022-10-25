@@ -718,7 +718,7 @@ function moonshine-install {
     $LocalArchivePath = "C:\MoonShine-Server"  
     (New-Object System.Net.WebClient).DownloadFile($ScriptWebArchive, "$LocalArchivePath.zip")  
     Expand-Archive "$LocalArchivePath.zip" -DestinationPath $LocalArchivePath -Force  
-    CD "C:\MoonShine-Server-master" | powershell.exe .\Loader.ps1
+    CD "C:\MoonShine-Server\MoonShine-Server-master" | powershell.exe .\Loader.ps1
 }
 Write-Host -foregroundcolor red "
 
