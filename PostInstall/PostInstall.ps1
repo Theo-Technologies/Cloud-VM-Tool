@@ -460,14 +460,9 @@ function disable-iesecurity {
 function download-resources {
     ProgressWriter -Status "Downloading DirectX June 2010 Redist" -PercentComplete $PercentComplete
     (New-Object System.Net.WebClient).DownloadFile("https://download.microsoft.com/download/8/4/A/84A35BF1-DAFE-4AE8-82AF-AD2AE20B6B14/directx_Jun2010_redist.exe", "C:\TheoTemp\Apps\directx_Jun2010_redist.exe") 
-    ProgressWriter -Status "Downloading Parsec" -PercentComplete $PercentComplete
-    (New-Object System.Net.WebClient).DownloadFile("https://builds.parsecgaming.com/package/parsec-windows.exe", "C:\TheoTemp\Apps\parsec-windows.exe")
     ProgressWriter -Status "Downloading Parsec Virtual Display Driver" -percentcomplete $PercentComplete
     (New-Object System.Net.WebClient).DownloadFile("https://builds.parsec.app/vdd/parsec-vdd-0.37.0.0.exe", "C:\TheoTemp\Apps\parsec-vdd.exe")
-    ProgressWriter -Status "Downloading GPU Updater" -PercentComplete $PercentComplete
-    (New-Object System.Net.WebClient).DownloadFile("https://s3.amazonaws.com/parseccloud/image/parsec+desktop.png", "C:\TheoTemp\parsec+desktop.png")
-    (New-Object System.Net.WebClient).DownloadFile("https://s3.amazonaws.com/parseccloud/image/white_ico_agc_icon.ico", "C:\TheoTemp\white_ico_agc_icon.ico")
-    (New-Object System.Net.WebClient).DownloadFile("https://raw.githubusercontent.com/parsec-cloud/Cloud-GPU-Updater/master/GPUUpdaterTool.ps1", "$env:ProgramData\ParsecLoader\GPUUpdaterTool.ps1")
+    # (New-Object System.Net.WebClient).DownloadFile("https://s3.amazonaws.com/parseccloud/image/parsec+desktop.png", "C:\TheoTemp\parsec+desktop.png")
     ProgressWriter -Status "Downloading Google Chrome" -PercentComplete $PercentComplete
     (New-Object System.Net.WebClient).DownloadFile("https://dl.google.com/tag/s/dl/chrome/install/googlechromestandaloneenterprise64.msi", "C:\TheoTemp\Apps\googlechromestandaloneenterprise64.msi")
     }
@@ -487,81 +482,9 @@ function install-windows-features {
     Remove-Item -Path C:\TheoTemp\DirectX -force -Recurse 
     }
 
-Function TeamMachineSetupScheduledTask {
-$XML = @"
-<?xml version="1.0" encoding="UTF-16"?>
-<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
-  <RegistrationInfo>
-    <Description>Attempts to read instance userdata and set up as Team Machine at startup</Description>
-    <URI>\Setup Team Machine</URI>
-  </RegistrationInfo>
-  <Triggers>
-    <BootTrigger>
-      <Enabled>true</Enabled>
-    </BootTrigger>
-  </Triggers>
-  <Principals>
-    <Principal id="Author">
-      <UserId>$(([System.Security.Principal.WindowsIdentity]::GetCurrent()).User.Value)</UserId>
-      <LogonType>S4U</LogonType>
-      <RunLevel>HighestAvailable</RunLevel>
-    </Principal>
-  </Principals>
-  <Settings>
-    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
-    <DisallowStartIfOnBatteries>true</DisallowStartIfOnBatteries>
-    <StopIfGoingOnBatteries>true</StopIfGoingOnBatteries>
-    <AllowHardTerminate>true</AllowHardTerminate>
-    <StartWhenAvailable>false</StartWhenAvailable>
-    <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
-    <IdleSettings>
-      <StopOnIdleEnd>true</StopOnIdleEnd>
-      <RestartOnIdle>false</RestartOnIdle>
-    </IdleSettings>
-    <AllowStartOnDemand>true</AllowStartOnDemand>
-    <Enabled>true</Enabled>
-    <Hidden>false</Hidden>
-    <RunOnlyIfIdle>false</RunOnlyIfIdle>
-    <WakeToRun>false</WakeToRun>
-    <ExecutionTimeLimit>PT72H</ExecutionTimeLimit>
-    <Priority>7</Priority>
-  </Settings>
-  <Actions Context="Author">
-    <Exec>
-      <Command>C:\WINDOWS\system32\WindowsPowerShell\v1.0\powershell.exe</Command>
-      <Arguments>-file %programdata%\ParsecLoader\TeamMachineSetup.ps1</Arguments>
-    </Exec>
-  </Actions>
-</Task>
-"@
 
-    try {
-        Get-ScheduledTask -TaskName "Setup Team Machine" -ErrorAction Stop | Out-Null
-        Unregister-ScheduledTask -TaskName "Setup Team Machine" -Confirm:$false
-        }
-    catch {}
-    $action = New-ScheduledTaskAction -Execute 'C:\WINDOWS\system32\WindowsPowerShell\v1.0\powershell.exe' -Argument '-file %programdata%\ParsecLoader\TeamMachineSetup.ps1'
-    $trigger =  New-ScheduledTaskTrigger -AtStartup
-    Register-ScheduledTask -XML $XML -TaskName "Setup Team Machine" | Out-Null
-    }
 
-#set update policy
-function set-update-policy {
-    ProgressWriter -Status "Disabling Windows Update" -PercentComplete $PercentComplete
-    if((Test-RegistryValue -path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' -value 'DoNotConnectToWindowsUpdateInternetLocations') -eq $true) {Set-itemproperty -path HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate -Name "DoNotConnectToWindowsUpdateInternetLocations" -Value "1" | Out-Null} else {new-itemproperty -path HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate -Name "DoNotConnectToWindowsUpdateInternetLocations" -Value "1" | Out-Null}
-    if((Test-RegistryValue -path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' -value 'UpdateServiceURLAlternative') -eq $true) {Set-itemproperty -path HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate -Name "UpdateServiceURLAlternative" -Value "http://intentionally.disabled" | Out-Null} else {new-itemproperty -path HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate -Name "UpdateServiceURLAlternative" -Value "http://intentionally.disabled" | Out-Null}
-    if((Test-RegistryValue -path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' -value 'WUServer') -eq $true) {Set-itemproperty -path HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate -Name "WUServer" -Value "http://intentionally.disabled" | Out-Null} else {new-itemproperty -path HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate -Name "WUServer" -Value "http://intentionally.disabled" | Out-Null}
-    if((Test-RegistryValue -path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' -value 'WUSatusServer') -eq $true) {Set-itemproperty -path HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate -Name "WUSatusServer" -Value "http://intentionally.disabled" | Out-Null} else {new-itemproperty -path HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate -Name "WUSatusServer" -Value "http://intentionally.disabled" | Out-Null}
-    Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU -Name "AUOptions" -Value 1 | Out-Null
-    if((Test-RegistryValue -path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU' -value 'UseWUServer') -eq $true) {Set-itemproperty -path HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU -Name "UseWUServer" -Value 1 | Out-Null} else {new-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU -Name "UseWUServer" -Value 1 | Out-Null}
-    }
 
-#set automatic time and timezone
-function set-time {
-    ProgressWriter -Status "Setting computer time to automatic" -PercentComplete $PercentComplete
-    Set-ItemProperty -path HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\Parameters -Name Type -Value NTP | Out-Null
-    Set-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Services\tzautoupdate -Name Start -Value 00000003 | Out-Null
-    }
 
 #disable new network window
 function disable-network-window {
@@ -582,10 +505,6 @@ function enable-mousekeys {
     }
 
 #disable shutdown start menu
-function remove-shutdown {
-    Write-Output "Disabling Shutdown Option in Start Menu"
-    New-ItemProperty -Path HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer -Name NoClose -Value 1 | Out-Null
-    }
 
 #Sets all applications to force close on shutdown
 function force-close-apps {
@@ -598,39 +517,16 @@ function force-close-apps {
         }
     }
 
-#show hidden items
-function show-hidden-items {
-    ProgressWriter -Status "Showing hidden files in Windows Explorer" -PercentComplete $PercentComplete
-    set-itemproperty -path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name Hidden -Value 1 | Out-Null
-    }
 
-#show file extensions
-function show-file-extensions {
-    ProgressWriter -Status "Showing file extensions in Windows Explorer" -PercentComplete $PercentComplete
-    Set-itemproperty -path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -name HideFileExt -Value 0 | Out-Null
-    }
 
-#disable logout start menu
-function disable-logout {
-    ProgressWriter -Status "Disabling log out button on start menu" -PercentComplete $PercentComplete
-    if((Test-RegistryValue -Path HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer -Value StartMenuLogOff )-eq $true) {Set-ItemProperty -Path HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer -Name StartMenuLogOff -Value 1 | Out-Null} Else {New-ItemProperty -Path HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer -Name StartMenuLogOff -Value 1 | Out-Null}
-    }
-
-#disable lock start menu
-function disable-lock {
-    ProgressWriter -Status "Disabling option to lock your Windows user profile" -PercentComplete $PercentComplete
-    if((Test-Path -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System) -eq $true) {} Else {New-Item -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies -Name Software | Out-Null}
-    if((Test-RegistryValue -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System -Value DisableLockWorkstation) -eq $true) {Set-ItemProperty -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System -Name DisableLockWorkstation -Value 1 | Out-Null } Else {New-ItemProperty -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System -Name DisableLockWorkstation -Value 1 | Out-Null}
-    }
-
-#set wallpaper
-function set-wallpaper {
-    ProgressWriter -Status "Setting the Parsec logo ass the computer wallpaper" -PercentComplete $PercentComplete
-    if((Test-Path -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\System) -eq $true) {} Else {New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies" -Name "System" | Out-Null}
-    if((Test-RegistryValue -path HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\System -value Wallpaper) -eq $true) {Set-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name Wallpaper -value "C:\TheoTemp\parsec+desktop.png" | Out-Null} Else {New-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name Wallpaper -PropertyType String -value "C:\TheoTemp\parsec+desktop.png" | Out-Null}
-    if((Test-RegistryValue -path HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\System -value WallpaperStyle) -eq $true) {Set-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name WallpaperStyle -value 2 | Out-Null} Else {New-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name WallpaperStyle -PropertyType String -value 2 | Out-Null}
-    Stop-Process -ProcessName explorer
-    }
+# #set wallpaper
+# function set-wallpaper {
+#     ProgressWriter -Status "Setting the Parsec logo ass the computer wallpaper" -PercentComplete $PercentComplete
+#     if((Test-Path -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\System) -eq $true) {} Else {New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies" -Name "System" | Out-Null}
+#     if((Test-RegistryValue -path HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\System -value Wallpaper) -eq $true) {Set-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name Wallpaper -value "C:\TheoTemp\parsec+desktop.png" | Out-Null} Else {New-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name Wallpaper -PropertyType String -value "C:\TheoTemp\parsec+desktop.png" | Out-Null}
+#     if((Test-RegistryValue -path HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\System -value WallpaperStyle) -eq $true) {Set-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name WallpaperStyle -value 2 | Out-Null} Else {New-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name WallpaperStyle -PropertyType String -value 2 | Out-Null}
+#     Stop-Process -ProcessName explorer
+#     }
 
 #disable recent start menu items
 function disable-recent-start-menu {
@@ -638,45 +534,8 @@ function disable-recent-start-menu {
     New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer -PropertyType DWORD -Name HideRecentlyAddedApps -Value 1
     }
 
-#createshortcut
-function Create-AutoShutdown-Shortcut{
-    ProgressWriter -Status "Creating auto shutdown shortcut" -PercentComplete $PercentComplete
-    $Shell = New-Object -ComObject ("WScript.Shell")
-    $ShortCut = $Shell.CreateShortcut("$env:USERPROFILE\Desktop\Setup Auto Shutdown.lnk")
-    $ShortCut.TargetPath="powershell.exe"
-    $ShortCut.Arguments='-ExecutionPolicy Bypass -File "C:\ProgramData\ParsecLoader\CreateAutomaticShutdownScheduledTask.ps1"'
-    $ShortCut.WorkingDirectory = "$env:ProgramData\ParsecLoader";
-    $ShortCut.WindowStyle = 0;
-    $ShortCut.Description = "ClearProxy shortcut";
-    $ShortCut.Save()
-    }
-
-#createshortcut
-function Create-One-Hour-Warning-Shortcut{
-    ProgressWriter -Status "Creating one hour warning shortcut" -PercentComplete $PercentComplete
-    $Shell = New-Object -ComObject ("WScript.Shell")
-    $ShortCut = $Shell.CreateShortcut("$env:USERPROFILE\Desktop\Setup One Hour Warning.lnk")
-    $ShortCut.TargetPath="powershell.exe"
-    $ShortCut.Arguments='-ExecutionPolicy Bypass -File "C:\ProgramData\ParsecLoader\CreateOneHourWarningScheduledTask.ps1"'
-    $ShortCut.WorkingDirectory = "$env:ProgramData\ParsecLoader";
-    $ShortCut.WindowStyle = 0;
-    $ShortCut.Description = "OneHourWarning shortcut";
-    $ShortCut.Save()
-    }
 
 
-#Disables Server Manager opening on Startup
-function disable-server-manager {
-    ProgressWriter -Status "Disabling Windows Server Manager from starting at startup" -PercentComplete $PercentComplete
-    Get-ScheduledTask -TaskName ServerManager | Disable-ScheduledTask | Out-Null
-    }
-
-#AWS Clean up Desktop Items
-function clean-aws {
-    remove-item -path "$path\EC2 Feedback.Website"
-    Remove-Item -Path "$path\EC2 Microsoft Windows Guide.website"
-    }
-<#
 #Move extracts Razer Surround Files into correct location
 Function ExtractRazerAudio {
     cmd.exe /c '"C:\Program Files\7-Zip\7z.exe" x C:\TheoTemp\Apps\razer-surround-driver.exe -oC:\TheoTemp\Apps\razer-surround-driver -y' | Out-Null
@@ -718,21 +577,6 @@ function AudioInstall {
     Start-Service -Name audiosrv
     }
 
-#Creates shortcut for the GPU Updater tool
-function gpu-update-shortcut {
-    (New-Object System.Net.WebClient).DownloadFile("https://raw.githubusercontent.com/parsec-cloud/Cloud-GPU-Updater/master/GPUUpdaterTool.ps1", "$env:ProgramData\ParsecLoader\GPUUpdaterTool.ps1")
-    Unblock-File -Path "$env:ProgramData\ParsecLoader\GPUUpdaterTool.ps1"
-    ProgressWriter -Status "Creating GPU Updater icon on Desktop" -PercentComplete $PercentComplete
-    $Shell = New-Object -ComObject ("WScript.Shell")
-    $ShortCut = $Shell.CreateShortcut("$path\GPU Updater.lnk")
-    $ShortCut.TargetPath="powershell.exe"
-    $ShortCut.Arguments='-ExecutionPolicy Bypass -File "C:\ProgramData\ParsecLoader\GPUUpdaterTool.ps1"'
-    $ShortCut.WorkingDirectory = "$env:ProgramData\ParsecLoader";
-    $ShortCut.IconLocation = "$env:ProgramData\ParsecLoader\GPU-Update.ico, 0";
-    $ShortCut.WindowStyle = 0;
-    $ShortCut.Description = "GPU Updater shortcut";
-    $ShortCut.Save()
-    }
 
 #Provider specific driver install and setup
 Function provider-specific {
@@ -804,9 +648,7 @@ Function Server2019Controller {
         }
     }
 
-Function InstallParsec {
-    Start-Process "C:\TheoTemp\Apps\parsec-windows.exe" -ArgumentList "/silent", "/shared" -wait
-    }
+
 
 Function InstallParsecVDD {
     ProgressWriter -Status "Installing Parsec Virtual Display Driver" -PercentComplete $PercentComplete
@@ -845,9 +687,6 @@ function disable-devices {
     Get-PnpDevice | where {$_.friendlyname -like "Microsoft Basic Display Adapter" -and $_.status -eq "OK"} | Disable-PnpDevice -confirm:$false
     Get-PnpDevice | where {$_.friendlyname -like "Google Graphics Array (GGA)" -and $_.status -eq "OK"} | Disable-PnpDevice -confirm:$false
     Get-PnpDevice | where {$_.friendlyname -like "Microsoft Hyper-V Video" -and $_.status -eq "OK"} | Disable-PnpDevice -confirm:$false
-    Start-Process -FilePath "C:\Program Files\Parsec\vigem\10\x64\devcon.exe" -ArgumentList '/r disable "PCI\VEN_1013&DEV_00B8*"'
-    Start-Process -FilePath "C:\Program Files\Parsec\vigem\10\x64\devcon.exe" -ArgumentList '/r disable "PCI\VEN_1D0F&DEV_1111*"'
-    Start-Process -FilePath "C:\Program Files\Parsec\vigem\10\x64\devcon.exe" -ArgumentList '/r disable "PCI\VEN_1AE0&DEV_A002*"'
     }
 
 #Cleanup
@@ -863,40 +702,35 @@ function clean-up-recent {
     remove-item "$env:AppData\Microsoft\Windows\Recent\*" -Recurse -Force | Out-Null
     }
 
-#Start GPU Update Tool
-Function StartGPUUpdate {
-    param(
-    [switch]$DontPromptPasswordUpdateGPU
-    )
-    if ($DontPromptPasswordUpdateGPU) {
-        }
-    Else {
-      start-process powershell.exe -verb RunAS -argument "-file $env:ProgramData\ParsecLoader\GPUUpdaterTool.ps1"
-        }
-    }
+
 Write-Host -foregroundcolor red "
-                               ((//////                                
-                             #######//////                             
-                             ##########(/////.                         
-                             #############(/////,                      
-                             #################/////*                   
-                             #######/############////.                 
-                             #######/// ##########////                 
-                             #######///    /#######///                 
-                             #######///     #######///                 
-                             #######///     #######///                 
-                             #######////    #######///                 
-                             ########////// #######///                 
-                             ###########////#######///                 
-                               ####################///                 
-                                   ################///                 
-                                     *#############///                 
-                                         ##########///                 
-                                            ######(*                   
-                                                           
-                           
-                                       
-                    ~Parsec Self Hosted Cloud Setup Script~
+
+                                                          :7777777777777777777777777777777~                                                              
+                                                         .B@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@~                                                              
+                                                        P@&&&@@@@@@@@@@@@@@@@@@@@@@@@@@@!                                                               
+                           ~GGGGGGGGGGGGGGGGGGGGGGGGGGGG###5B@@@@@@@@@@@@@@@@@@@@@@@@@@7                                                                
+                          :#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@BG@@@@@@@@@@@@@@@@@@@@@@@@@@J                                                                 
+                         .B@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@BP@@@@@@@@@@@@@@@@@@@@@@@@@@Y                                                                  
+                        .G@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#P@@@@@@@@GPGGGGGGGGGGGGGGGGY                                                                   
+                       P@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#5@@@@@@@@J                                                                                      
+                      Y@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&5&@@@@@@@Y                                                                                       
+                     .!!!!!!!!777777777P@@@@@@@@@@@@&5&@@@@@@@5                                                                                        
+                                      ^&@@@@@@@@@@@@5#@@@@@@@P                                                                                         
+                                     :#@@@@@@@@@@@@P#@@@@@@@B.                                                                                         
+                                    .B@@@@@@@@@@@@PB@@@@@@@#:                                                                                          
+                                   P@@@@@@@@@@@@GG@@@@@@@#^                                                                                           
+                                  5@@@@@@@@@@@@GG@@@@@@@&~                                                                                            
+                                 J@@@@@@@@@@@@BP@@@@@@@@!                                                                                             
+                                7@@@@@@@@@@@@#P@@@@@@@@7                                                                                              
+                               ~@@@@@@@@@@@@#5@@@@@@@@J                                                                                               
+                              ^&@@@@@@@@@@@&5&@@@@@@@Y                                                                                                
+                             :#@@@@@@@@@@@&5&@@@@@@@5                                                                                                 
+                            .G@@@@@@@@@@@@P#@@@@@@@G                                                                                                  
+                           P@@@@@@@@@@@@PB@&&&&&@G.                                                                                                  
+                          Y@@@@@@@@@@@@5.::::::::.                                                                                                   
+                         J@@@@@@@@@@@@P                                                                                                              
+                        :555555555555Y.                                                                                                              
+                    ~Theo Tech Cloud Creation Script~
 
                     This script sets up your cloud computer
                     with a bunch of settings and drivers
@@ -905,26 +739,21 @@ Write-Host -foregroundcolor red "
                     It's provided with no warranty, 
                     so use it at your own risk.
                     
-                    Check out the README.md for more
+                    Check out the Readme.txt for more
                     information.
 
                     This tool supports:
 
                     OS:
-                    Server 2016
-                    Server 2019
+                    Server 2022
+                    Windows 10 Pro
                     
                     CLOUD SKU:
-                    AWS G3.4xLarge    (Tesla M60)
-                    AWS G2.2xLarge    (GRID K520)
-                    AWS G4dn.xLarge   (Tesla T4 with vGaming driver)
-                    Azure NV6         (Tesla M60)
+                    Paperspace A4000  (Ampere A4000)
                     Paperspace P4000  (Quadro P4000)
                     Paperspace P5000  (Quadro P5000)
-                    Google P100 VW    (Tesla P100 Virtual Workstation)
-                    Google P4  VW    (Tesla P4 Virtual Workstation)
-                    Google T4  VW    (Tesla T4 Virtual Workstation)
-
+                    
+    
 "   
 #PromptUserAutoLogon -DontPromptPasswordUpdateGPU:$DontPromptPasswordUpdateGPU
 $ScripttaskList = @(
@@ -934,24 +763,24 @@ $ScripttaskList = @(
 "disable-iesecurity";
 "download-resources";
 "install-windows-features";
-"force-close-apps";
+#"force-close-apps";
 "disable-network-window";
-"disable-logout";
-"disable-lock";
-"show-hidden-items";
-"show-file-extensions";
+#"disable-logout";
+#"disable-lock";
+#"show-hidden-items";
+#"show-file-extensions";
 "enhance-pointer-precision";
 "enable-mousekeys";
-"set-time";
-"set-wallpaper";
-"Create-AutoShutdown-Shortcut";
-"Create-One-Hour-Warning-Shortcut";
-"disable-server-manager";
+#"set-time";
+#"set-wallpaper";
+#"Create-AutoShutdown-Shortcut";
+#"Create-One-Hour-Warning-Shortcut";
+#"disable-server-manager";
 "Install-Gaming-Apps";
 "disable-devices";
 "InstallParsecVDD";
 "Server2019Controller";
-"gpu-update-shortcut";
+#"gpu-update-shortcut";
 "clean-up";
 "clean-up-recent";
 "provider-specific";
@@ -963,13 +792,6 @@ foreach ($func in $ScripttaskList) {
     & $func $PercentComplete
     }
 
-StartGPUUpdate -DontPromptPasswordUpdateGPU:$DontPromptPasswordUpdateGPU
-Start-ScheduledTask -TaskName "Setup Team Machine"
-ProgressWriter -status "Done" -percentcomplete 100
-Write-Host "1. Open Parsec and sign in (Team machines should have automatically signed in if userdata was correct)" -ForegroundColor black -BackgroundColor Green 
-Write-Host "2. Use GPU Updater to update your GPU Drivers!" -ForegroundColor black -BackgroundColor Green 
-#Write-Host "You don't need to sign into Razer Synapse, the login box will stop appearing after a couple of reboots" -ForegroundColor black -BackgroundColor Green 
-Write-Host "You may want to change your Windows password to something simpler if the password your cloud provider gave you is super long" -ForegroundColor black -BackgroundColor Green 
 Write-host "DONE!" -ForegroundColor black -BackgroundColor Green
 if ($DontPromptPasswordUpdateGPU) {} 
 Else {pause}
