@@ -546,6 +546,7 @@ Function ModidifyManifest {
     $InstallerManifest = 'C:\TheoTemp\Apps\razer-surround-driver\$TEMP\RazerSurroundInstaller\InstallerManifest.xml'
     $regex = '(?<=<SilentMode>)[^<]*'
     (Get-Content $InstallerManifest) -replace $regex, 'true' | Set-Content $InstallerManifest -Encoding UTF8
+}
 #>
 
  #Audio Driver Install
@@ -702,7 +703,23 @@ function clean-up-recent {
     remove-item "$env:AppData\Microsoft\Windows\Recent\*" -Recurse -Force | Out-Null
     }
 
+#create firewall exceptions
+function open-moonshine-ports {
+    New-NetFirewallRule -DisplayName 'MoonShine' -Profile 'Public' -Direction Inbound -Action Allow -Protocol TCP -LocalPort 47984, 47989, 48010
+    New-NetFirewallRule -DisplayName 'MoonShine' -Profile 'Public' -Direction Inbound -Action Allow -Protocol UDP -LocalPort 47998, 47999, 48000, 48002, 48010
 
+    New-NetFirewallRule -DisplayName 'MoonShine' -Profile 'Public' -Direction Outbound -Action Allow -Protocol TCP -LocalPort 47984, 47989, 48010
+    New-NetFirewallRule -DisplayName 'MoonShine' -Profile 'Public' -Direction Outbound -Action Allow -Protocol UDP -LocalPort 47998, 47999, 48000, 48002, 48010
+}
+
+function moonshine-install {
+    [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls" 
+    $ScriptWebArchive = "https://github.com/Theo-Technologies/MoonShine-Server/archive/master.zip"  
+    $LocalArchivePath = "C:\MoonShine-Server"  
+    (New-Object System.Net.WebClient).DownloadFile($ScriptWebArchive, "$LocalArchivePath.zip")  
+    Expand-Archive "$LocalArchivePath.zip" -DestinationPath $LocalArchivePath -Force  
+    CD "C:\MoonShine-Server-master" | powershell.exe .\Loader.ps1
+}
 Write-Host -foregroundcolor red "
 
                                                           :7777777777777777777777777777777~                                                              
@@ -764,6 +781,8 @@ $ScripttaskList = @(
 "download-resources";
 "install-windows-features";
 #"force-close-apps";
+"open-moonshine-ports";
+"moonshine-install"
 "disable-network-window";
 #"disable-logout";
 #"disable-lock";
