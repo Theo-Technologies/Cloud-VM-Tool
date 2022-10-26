@@ -449,8 +449,8 @@ function disable-iesecurity {
 function download-resources {
     ProgressWriter -Status "Downloading DirectX June 2010 Redist" -PercentComplete $PercentComplete
     (New-Object System.Net.WebClient).DownloadFile("https://download.microsoft.com/download/8/4/A/84A35BF1-DAFE-4AE8-82AF-AD2AE20B6B14/directx_Jun2010_redist.exe", "C:\TheoTemp\Apps\directx_Jun2010_redist.exe") 
-    ProgressWriter -Status "Downloading Parsec Virtual Display Driver" -percentcomplete $PercentComplete
-    (New-Object System.Net.WebClient).DownloadFile("https://builds.parsec.app/vdd/parsec-vdd-0.37.0.0.exe", "C:\TheoTemp\Apps\parsec-vdd.exe")
+    #ProgressWriter -Status "Downloading Parsec Virtual Display Driver" -percentcomplete $PercentComplete
+    #(New-Object System.Net.WebClient).DownloadFile("https://builds.parsec.app/vdd/parsec-vdd-0.37.0.0.exe", "C:\TheoTemp\Apps\parsec-vdd.exe")
     # (New-Object System.Net.WebClient).DownloadFile("https://s3.amazonaws.com/parseccloud/image/parsec+desktop.png", "C:\TheoTemp\parsec+desktop.png")
     ProgressWriter -Status "Downloading Google Chrome" -PercentComplete $PercentComplete
     (New-Object System.Net.WebClient).DownloadFile("https://dl.google.com/tag/s/dl/chrome/install/googlechromestandaloneenterprise64.msi", "C:\TheoTemp\Apps\googlechromestandaloneenterprise64.msi")
@@ -493,7 +493,6 @@ function enable-mousekeys {
     set-Itemproperty -Path 'HKCU:\Control Panel\Accessibility\MouseKeys' -Name Flags -Value 63 | Out-Null
     }
 
-#disable shutdown start menu
 
 #Sets all applications to force close on shutdown
 function force-close-apps {
@@ -650,16 +649,16 @@ Function InstallTheoVDD {
 function Install-Gaming-Apps {
     ProgressWriter -Status "Installing ViGEm https://github.com/ViGEm/ViGEmBus and 7Zip" -PercentComplete $PercentComplete
     Install7Zip
-    InstallParsec
+   # InstallParsec
     #if((Test-RegistryValue -path HKCU:\Software\Microsoft\Windows\CurrentVersion\Run -value "Parsec.App.0") -eq $true) {Set-ItemProperty -path HKCU:\Software\Microsoft\Windows\CurrentVersion\Run -Name "Parsec.App.0" -Value "C:\Program Files\Parsec\parsecd.exe" | Out-Null} Else {New-ItemProperty -path HKCU:\Software\Microsoft\Windows\CurrentVersion\Run -Name "Parsec.App.0" -Value "C:\Program Files\Parsec\parsecd.exe" | Out-Null}
-    Start-Process -FilePath "C:\Program Files\Parsec\parsecd.exe"
-    Start-Sleep -s 1
+   # Start-Process -FilePath "C:\Program Files\Parsec\parsecd.exe"
+   # Start-Sleep -s 1
     }
 
 #Disable Devices
 function disable-devices {
     ProgressWriter -Status "Disabling Microsoft Basic Display Adapter, Generic Non PNP Monitor and other devices" -PercentComplete $PercentComplete
-    Start-Process -FilePath "C:\Program Files\Parsec\vigem\10\x64\devcon.exe" -ArgumentList '/r disable "HDAUDIO\FUNC_01&VEN_10DE&DEV_0083&SUBSYS_10DE11A3*"'
+    #Start-Process -FilePath "C:\Program Files\Parsec\vigem\10\x64\devcon.exe" -ArgumentList '/r disable "HDAUDIO\FUNC_01&VEN_10DE&DEV_0083&SUBSYS_10DE11A3*"'
     Get-PnpDevice | where {$_.friendlyname -like "Generic Non-PNP Monitor" -and $_.status -eq "OK"} | Disable-PnpDevice -confirm:$false
     Get-PnpDevice | where {$_.friendlyname -like "Microsoft Basic Display Adapter" -and $_.status -eq "OK"} | Disable-PnpDevice -confirm:$false
     Get-PnpDevice | where {$_.friendlyname -like "Google Graphics Array (GGA)" -and $_.status -eq "OK"} | Disable-PnpDevice -confirm:$false
@@ -756,21 +755,21 @@ $ScripttaskList = @(
 "disable-iesecurity";
 "download-resources";
 "install-windows-features";
-#"force-close-apps";
+"force-close-apps";
 "open-moonshine-ports";
 "moonshine-install"
 "disable-network-window";
-#"disable-logout";
-#"disable-lock";
+"disable-logout";
+"disable-lock";
 #"show-hidden-items";
-#"show-file-extensions";
+"show-file-extensions";
 "enhance-pointer-precision";
 "enable-mousekeys";
 #"set-time";
 #"set-wallpaper";
 #"Create-AutoShutdown-Shortcut";
 #"Create-One-Hour-Warning-Shortcut";
-#"disable-server-manager";
+"disable-server-manager";
 "Install-Gaming-Apps";
 "disable-devices";
 "InstallTheoVDD";
