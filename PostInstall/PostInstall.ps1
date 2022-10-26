@@ -26,7 +26,7 @@ function setupEnvironment {
     if((Test-Path $env:ProgramData\TheoLoader\clear-proxy.ps1) -eq $true) {} Else {Move-Item -Path $path\TheoTemp\PreInstall\clear-proxy.ps1 -Destination $env:ProgramData\TheoLoader}
     if((Test-Path $env:ProgramData\TheoLoader\CreateClearProxyScheduledTask.ps1) -eq $true) {} Else {Move-Item -Path $path\TheoTemp\PreInstall\CreateClearProxyScheduledTask.ps1 -Destination $env:ProgramData\TheoLoader}
     if((Test-Path $env:ProgramData\TheoLoader\ShowDialog.ps1) -eq $true) {} Else {Move-Item -Path $path\TheoTemp\PreInstall\ShowDialog.ps1 -Destination $env:ProgramData\TheoLoader}
-    if((Test-Path C:\IddSampleDriver) -eq $true) {} Else {Move-Item -Path $path\TheoTemp\IddSampleDriver -Destination C:\IddSampleDriver}
+    if((Test-Path C:\IddSampleDriver) -eq $true) {} Else {Move-Item -Path $path\TheoTemp\PreInstall\IddSampleDriver -Destination C:\IddSampleDriver}
     }
 
 function cloudprovider { 
