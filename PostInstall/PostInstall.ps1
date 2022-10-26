@@ -23,9 +23,10 @@ function setupEnvironment {
     ProgressWriter -Status "Moving files and folders into place" -PercentComplete $PercentComplete
     if((Test-Path C:\Windows\system32\GroupPolicy\Machine\Scripts\psscripts.ini) -eq $true) {} Else {Move-Item -Path $path\TheoTemp\PreInstall\psscripts.ini -Destination C:\Windows\system32\GroupPolicy\Machine\Scripts}
     if((Test-Path C:\Windows\system32\GroupPolicy\Machine\Scripts\Shutdown\NetworkRestore.ps1) -eq $true) {} Else {Move-Item -Path $path\TheoTemp\PreInstall\NetworkRestore.ps1 -Destination C:\Windows\system32\GroupPolicy\Machine\Scripts\Shutdown} 
-    if((Test-Path $env:ProgramData\ParsecLoader\clear-proxy.ps1) -eq $true) {} Else {Move-Item -Path $path\TheoTemp\PreInstall\clear-proxy.ps1 -Destination $env:ProgramData\ParsecLoader}
-    if((Test-Path $env:ProgramData\ParsecLoader\CreateClearProxyScheduledTask.ps1) -eq $true) {} Else {Move-Item -Path $path\TheoTemp\PreInstall\CreateClearProxyScheduledTask.ps1 -Destination $env:ProgramData\ParsecLoader}
-    if((Test-Path $env:ProgramData\ParsecLoader\ShowDialog.ps1) -eq $true) {} Else {Move-Item -Path $path\TheoTemp\PreInstall\ShowDialog.ps1 -Destination $env:ProgramData\ParsecLoader}
+    if((Test-Path $env:ProgramData\TheoLoader\clear-proxy.ps1) -eq $true) {} Else {Move-Item -Path $path\TheoTemp\PreInstall\clear-proxy.ps1 -Destination $env:ProgramData\TheoLoader}
+    if((Test-Path $env:ProgramData\TheoLoader\CreateClearProxyScheduledTask.ps1) -eq $true) {} Else {Move-Item -Path $path\TheoTemp\PreInstall\CreateClearProxyScheduledTask.ps1 -Destination $env:ProgramData\TheoLoader}
+    if((Test-Path $env:ProgramData\TheoLoader\ShowDialog.ps1) -eq $true) {} Else {Move-Item -Path $path\TheoTemp\PreInstall\ShowDialog.ps1 -Destination $env:ProgramData\TheoLoader}
+    if((Test-Path C:\IddSampleDriver) -eq $true) {} Else {Move-Item -Path $path\TheoTemp\IddSampleDriver -Destination C:\IddSampleDriver}
     }
 
 function cloudprovider { 
@@ -639,28 +640,15 @@ Function Server2019Controller {
 
 
 
-Function InstallParsecVDD {
-    ProgressWriter -Status "Installing Parsec Virtual Display Driver" -PercentComplete $PercentComplete
-    Import-Certificate -CertStoreLocation "Cert:\LocalMachine\TrustedPublisher" -FilePath "$env:ProgramData\ParsecLoader\parsecpublic.cer" | Out-Null
-    Start-Process "C:\TheoTemp\Apps\parsec-vdd.exe" -ArgumentList "/silent" 
-    $iterator = 0    
-    do {
-        Start-Sleep -s 2
-        $iterator++
-        }
-    Until (($null -ne ((Get-PnpDevice | Where-Object {$_.Name -eq "Parsec Virtual Display Adapter"}).DeviceID)) -or ($iterator -gt 7))
-    if (Get-process -name parsec-vdd -ErrorAction SilentlyContinue) {
-        Stop-Process -name parsec-vdd -Force
-        }
-    $configfile = Get-Content C:\ProgramData\Parsec\config.txt
-    $configfile += "host_virtual_monitors = 1"
-    $configfile += "host_privacy_mode = 1"
-    $configfile | Out-File C:\ProgramData\Parsec\config.txt -Encoding ascii
+Function InstallTheoVDD {
+    ProgressWriter -Status "Installing MoonShine Virtual Display Driver" -PercentComplete $PercentComplete
+    cmd.exe /c "C:\IddSampleDriver\installCert.bat"
+    
 }
 
 #Apps that require human intervention
 function Install-Gaming-Apps {
-    ProgressWriter -Status "Installing Parsec, ViGEm https://github.com/ViGEm/ViGEmBus and 7Zip" -PercentComplete $PercentComplete
+    ProgressWriter -Status "Installing ViGEm https://github.com/ViGEm/ViGEmBus and 7Zip" -PercentComplete $PercentComplete
     Install7Zip
     InstallParsec
     #if((Test-RegistryValue -path HKCU:\Software\Microsoft\Windows\CurrentVersion\Run -value "Parsec.App.0") -eq $true) {Set-ItemProperty -path HKCU:\Software\Microsoft\Windows\CurrentVersion\Run -Name "Parsec.App.0" -Value "C:\Program Files\Parsec\parsecd.exe" | Out-Null} Else {New-ItemProperty -path HKCU:\Software\Microsoft\Windows\CurrentVersion\Run -Name "Parsec.App.0" -Value "C:\Program Files\Parsec\parsecd.exe" | Out-Null}
@@ -785,7 +773,7 @@ $ScripttaskList = @(
 #"disable-server-manager";
 "Install-Gaming-Apps";
 "disable-devices";
-"InstallParsecVDD";
+"InstallTheoVDD";
 "Server2019Controller";
 #"gpu-update-shortcut";
 "clean-up";
