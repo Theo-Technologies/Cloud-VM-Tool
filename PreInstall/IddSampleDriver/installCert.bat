@@ -1,4 +1,5 @@
 # Install certificates
+CD "C:\IddSampleDriver"
 certutil -addstore -f root IddSampleDriver.cer
 certutil -addstore -f TrustedPublisher IddSampleDriver.cer
 
